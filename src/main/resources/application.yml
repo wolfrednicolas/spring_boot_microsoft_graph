@@ -1,0 +1,19 @@
+app:
+  spring-profile: dev
+  ms-graph:
+    api: 
+      baseurl: https://graph.microsoft.com
+      outlook_account_id:
+  msal:
+    tenant: 
+    authority: https://login.microsoftonline.com/${app.msal.tenant}/
+    client_id: 
+    secret: 
+    scope: https://graph.microsoft.com/.default
+
+spring:  
+  profiles:
+    active: ${app.spring-profile}
+server:
+  port: 60020
+
