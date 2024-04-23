@@ -1,0 +1,10 @@
+app:
+  msal:
+    tenant: token
+    client_id: token
+    secret: token
+  ms-graph:
+    api: 
+      outlook_account_id: token
+  folders:
+    sent_items: token
