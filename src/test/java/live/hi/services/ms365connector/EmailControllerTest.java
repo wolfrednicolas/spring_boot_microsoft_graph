@@ -48,7 +48,7 @@ public class EmailControllerTest {
 
         Body body = new Body("text", "contenido");
         List<Recipient> toRecipients = new ArrayList<>();
-        Recipient toRecipient = new Recipient(new EmailAddress("mailtest@asespr.org"));
+        Recipient toRecipient = new Recipient(new EmailAddress("mailtest@example.com"));
         toRecipients.add(toRecipient);
         return new CreateDraftMessage(
             subject, body, toRecipients,new ArrayList<>(), importance);

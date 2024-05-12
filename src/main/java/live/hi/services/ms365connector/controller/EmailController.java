@@ -77,7 +77,6 @@ public class EmailController {
 	@Value("${app.folders.sent_items}")
 	private String sentItemsFolder;
 	
-	// Email API for ASES Enterprise System
 	
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
