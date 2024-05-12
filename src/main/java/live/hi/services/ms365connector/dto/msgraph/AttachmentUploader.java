@@ -4,54 +4,47 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.springframework.web.multipart.MultipartFile;
 
 public class AttachmentUploader {
 
-    public int uploadAttachment(String uploadUrl, MultipartFile multipartFile) throws IOException {
-        // Create a temporary file
-        File file = File.createTempFile("temp", null);
-
-        // Transfer the data from the MultipartFile to the file
-        multipartFile.transferTo(file);
-
-        // Call the original method with the temporary file
-        int responseCode = uploadAttachment(uploadUrl, file);
-
-        // Delete temporary file after upload
-        file.delete();
-
-        return responseCode;
-    }
-    
     public int uploadAttachment(String uploadUrl, File file) throws IOException {
-        // Open HTTP connection
-        HttpURLConnection connection = (HttpURLConnection) new URL(uploadUrl).openConnection();
+        long fileSize = file.length();
+        long bytesUploaded = 0;
+        int chunkSize = 4 * 1024 * 1024; // 4 MB chunk size
+        int responseCode = 0;
+        try (FileInputStream inputStream = new FileInputStream(file)) {
+            while (bytesUploaded < fileSize) {
+                // Calculate range for this chunk
+                long startByte = bytesUploaded;
+                long endByte = Math.min(bytesUploaded + chunkSize - 1, fileSize - 1);
+                long contentLength = endByte - startByte + 1;
+                // Open connection and set headers
+                HttpURLConnection connection = (HttpURLConnection) new URL(uploadUrl).openConnection();
+                connection.setRequestMethod("PUT");
+                connection.setRequestProperty("Content-Type", "application/octet-stream");
+                connection.setRequestProperty("Content-Length", String.valueOf(contentLength));
+                connection.setRequestProperty("Content-Range", "bytes " + startByte + "-" + endByte + "/" + fileSize);
+                connection.setDoOutput(true);
 
-        //Set PUT method
-        connection.setRequestMethod("PUT");
-
-        // Set headers
-        connection.setRequestProperty("Content-Type", "application/octet-stream");
-        connection.setRequestProperty("Content-Length", String.valueOf(file.length()));
-        connection.setRequestProperty("Content-Range", "bytes 0-" + (file.length() - 1) + "/" + file.length());
-
-        //Enable writing and set the request body
-        connection.setDoOutput(true);
-        try (OutputStream outputStream = connection.getOutputStream();
-             FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+                // Read the file fragment and write it to the output connection
+                try (OutputStream outputStream = connection.getOutputStream()) {
+                    int maxBytesToRead = (int) Math.min(chunkSize, fileSize - bytesUploaded);
+                    byte[] buffer = new byte[maxBytesToRead];
+                    int bytesRead = inputStream.read(buffer);
+                    outputStream.write(buffer, 0, bytesRead);
+                    bytesUploaded += bytesRead;
+                }
+                
+                // Response Code
+                responseCode = connection.getResponseCode();
+                // Close Connection
+                connection.disconnect();
             }
+        } catch (Exception e) {
+            responseCode = 500;
         }
 
-        int responseCode = connection.getResponseCode();
-
-        // Close Connection
-        connection.disconnect();
-        
         return responseCode;
     }
 }
+

@@ -1,6 +1,13 @@
 package live.hi.services.ms365connector.controller;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,12 +20,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -28,12 +36,16 @@ import com.microsoft.aad.msal4j.IAuthenticationResult;
 
 import jakarta.validation.Valid;
 import live.hi.services.ms365connector.dto.msgraph.CreateDraftMessageResponseDTO;
+import live.hi.services.ms365connector.dto.msgraph.DownloadFileListResponseDTO;
 import live.hi.services.ms365connector.dto.msgraph.DownloadFileResponseDTO;
 import live.hi.services.ms365connector.dto.msgraph.NotReadMessageResponseDTO;
+import live.hi.services.ms365connector.dto.msgraph.UpdateMessageRequestDTO;
 import live.hi.services.ms365connector.dto.msgraph.UploadSessionRequestDTO;
 import live.hi.services.ms365connector.dto.msgraph.UploadSessionResponseDTO;
+import live.hi.services.ms365connector.dto.msgraph.UserListResponse;
 import live.hi.services.ms365connector.dto.msgraph.ValidationErrorResponse;
 import live.hi.services.ms365connector.dto.msgraph.AttachmentItemDTO;
+import live.hi.services.ms365connector.dto.msgraph.AttachmentRequestDTO;
 import live.hi.services.ms365connector.dto.msgraph.AttachmentUploader;
 import live.hi.services.ms365connector.dto.msgraph.CopyDraftMessage;
 import live.hi.services.ms365connector.dto.msgraph.CreateDraftMessage;
@@ -65,6 +77,7 @@ public class EmailController {
 	@Value("${app.folders.sent_items}")
 	private String sentItemsFolder;
 	
+	// Email API for ASES Enterprise System
 	
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -125,24 +138,20 @@ public class EmailController {
 	}
 
 	@GetMapping( path = "/messages/{id}/attachments" )
-	public ResponseEntity<?> getEmailAttachments(@PathVariable String id) throws JsonProcessingException {
-        ResponseEntity<?> responseEntity = msGraphClient.getEmailAttachments(outlookAccount, headers, id);
-		
-		JsonNode responseJson = objectMapper.convertValue(responseEntity.getBody(), JsonNode.class);
+	@ResponseStatus(HttpStatus.OK)
+	public DownloadFileListResponseDTO getEmailAttachments(@PathVariable String id) throws JsonProcessingException {
+		DownloadFileListResponseDTO response = msGraphClient.getEmailAttachments(outlookAccount, headers, id);
+		// Iterate over elements and adjust the name of each file
+		for (DownloadFileResponseDTO file : response.getValue()) {
+			file.setName(file.getName());
+		}
+		return response;
+	}
 
-		JsonNode messagesArray = responseJson.get("value");
-
-		List<DownloadFileResponseDTO> downloadFileResponseDTOs = new ArrayList<>();
-
-		for (JsonNode messageNode : messagesArray) {
-            DownloadFileResponseDTO messageSummary = new DownloadFileResponseDTO();
-            messageSummary.setName(messageNode.get("name").asText());
-            messageSummary.setContentType(messageNode.get("contentType").asText());
-            messageSummary.setSize(messageNode.get("size").asLong());
-            messageSummary.setContentBytes(messageNode.get("contentBytes").asText());
-            downloadFileResponseDTOs.add(messageSummary);
-        }
-		return ResponseEntity.status(responseEntity.getStatusCode()).body(downloadFileResponseDTOs);
+	@GetMapping( path = "/messages/{message_id}/attachments/{attachment_id}" )
+	@ResponseStatus(HttpStatus.OK)
+	public DownloadFileResponseDTO getAttachmentById(@PathVariable String message_id, @PathVariable String attachment_id) throws JsonProcessingException {
+		return msGraphClient.getAttachmentById(outlookAccount, headers, message_id, attachment_id);
 	}
 
 	private CopyDraftMessage copyDraftMessage(String jsonString) throws JsonMappingException, JsonProcessingException{
@@ -157,9 +166,11 @@ public class EmailController {
 	}
 
 	@PostMapping( path = "/messages/{draft_id}/attachment" )
-	public ResponseEntity<?> uploadAttachment(@PathVariable String draft_id, MultipartFile file) throws IOException {
+	public ResponseEntity<?> uploadAttachment(@PathVariable String draft_id, @Valid @RequestBody AttachmentRequestDTO path) throws IOException {
 		
-		AttachmentItemDTO attachmentItemDTO = new AttachmentItemDTO("file", file.getOriginalFilename(), file.getSize());
+		File file = new File(path.getPath());
+
+		AttachmentItemDTO attachmentItemDTO = new AttachmentItemDTO("file", path.getPath(), file.length());
 		UploadSessionRequestDTO uploadSessionRequestDTO = new UploadSessionRequestDTO(attachmentItemDTO);
 
 		ResponseEntity<?> responseEntity = msGraphClient.createAnUploadSessionForMessage(outlookAccount, headers, draft_id, uploadSessionRequestDTO);
@@ -171,4 +182,43 @@ public class EmailController {
 		return ResponseEntity.status(responseCode).body(null);
 	}
 
+
+	@PatchMapping( path = "/markAsRead/{message_id}" )
+	public ResponseEntity<?> markAsRead(@PathVariable String message_id) throws JsonProcessingException {
+		String jsonString = "{\"isRead\": \"" + true + "\"}";
+		UpdateMessageRequestDTO updateMessageRequestDTO = objectMapper.readValue(jsonString, UpdateMessageRequestDTO.class);
+		ResponseEntity<?> responseEntity = msGraphClient.updateMessage(outlookAccount, headers, message_id, updateMessageRequestDTO);
+		return ResponseEntity.status(responseEntity.getStatusCode()).body(null);
+	}
+
+	@GetMapping( path = "/retrieveUsers" ) //endpoint prueba
+	public UserListResponse retrieveUsers() throws JsonProcessingException {
+		return msGraphClient.retrieveUsers(headers);
+	}
+
+	public ResponseEntity<?> downloadFile(String messageId, String attachmentId, String fileName) throws IOException {
+		URL url = new URL("https://graph.microsoft.com/v1.0/users/" + outlookAccount + "/messages/" + messageId + "/attachments/" + attachmentId + "/$value");
+		HttpStatus status;
+		try {
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Authorization", "Bearer " + authResult.accessToken());
+
+			ReadableByteChannel readableByteChannel = Channels.newChannel(connection.getInputStream());
+
+			FileOutputStream fileOutputStream = new FileOutputStream(new File(System.getProperty("user.dir"),fileName)); 
+			FileChannel fileChannel = fileOutputStream.getChannel();
+
+			fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+			fileChannel.close();
+			fileOutputStream.close();
+			connection.disconnect();
+			status = HttpStatus.OK;
+		} catch (Exception e) {
+			e.printStackTrace();
+			status = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+		// Return the status
+		return ResponseEntity.status(status).body(null);
+	}
 }

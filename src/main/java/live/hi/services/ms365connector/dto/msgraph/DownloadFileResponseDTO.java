@@ -1,12 +1,20 @@
 package live.hi.services.ms365connector.dto.msgraph;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.ToString;
 
-@Getter
-@Setter
+@Data
+@ToString
 public class DownloadFileResponseDTO {
+    private String id;
     private String name;
-    private String contentType;
-    private Long size;
-    private String contentBytes;
+
+    public String getName() {
+        // Gets the file name without the path
+        int lastSlashIndex = name.lastIndexOf("\\");
+        if (lastSlashIndex != -1) {
+            return name.substring(lastSlashIndex + 1);
+        } else {
+            return name; // If there is no route, return the full name
+        }
+    }
 }

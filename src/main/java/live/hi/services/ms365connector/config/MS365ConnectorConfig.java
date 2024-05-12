@@ -49,7 +49,8 @@ public class MS365ConnectorConfig {
 	public MSGraphClient msGraphClient( @Value( "${app.ms-graph.api.baseurl}" ) String baseurl) {
 		WebClient client = 
 				WebClient.builder()
-                	.baseUrl( baseurl )
+					.codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1))
+					.baseUrl( baseurl )
                 	.build();
 		
 		WebClientAdapter adapter = WebClientAdapter.create( client );
