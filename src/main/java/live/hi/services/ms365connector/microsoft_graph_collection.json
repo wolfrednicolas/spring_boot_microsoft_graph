@@ -1,0 +1,2352 @@
+{
+	"info": {
+		"_postman_id": "d426ce2b-772b-4c03-8dfd-91dc0f3cdce9",
+		"name": "Microsoft Graph",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1384218",
+		"_collection_link": "https://grey-eclipse-2721.postman.co/workspace/service-center~dafdd19d-7031-4b3a-b4a5-5a832217b88a/collection/1384218-d426ce2b-772b-4c03-8dfd-91dc0f3cdce9?action=share&source=collection_link&creator=1384218"
+	},
+	"item": [
+		{
+			"name": "Graph",
+			"item": [
+				{
+					"name": "Obtener carpetas donde se almacenan los emails",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseBody = pm.response.json();\r",
+									"\r",
+									"responseBody.value.forEach(function(folder) {\r",
+									"\r",
+									"    if (folder.displayName === \"Sent Items\") {\r",
+									"        pm.environment.set(\"sentItemFolderId\", folder.id);\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/mailFolders/",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"mailFolders",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "creacion de draft del mensaje",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonResponse = pm.response.json();\r",
+									"\r",
+									"pm.environment.set(\"draftId\", jsonResponse.id);\r",
+									"pm.environment.set(\"conversationId\", jsonResponse.conversationId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"subject\": \"prueba carpeta\",\r\n    \"importance\": \"low\",\r\n    \"body\": {\r\n      \"contentType\": \"HTML\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/messages",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "copiar draft a la carpeta enviados",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"destinationId\": \"{{sentItemFolderId}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/messages/{{draftId}}/copy",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"messages",
+								"{{draftId}}",
+								"copy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create an upload session for a message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/me/messages/{{draftId}}/attachments/createUploadSession",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"me",
+								"messages",
+								"{{draftId}}",
+								"attachments",
+								"createUploadSession"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "envio del draft del mensaje",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/messages/{{draftId}}/send",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"messages",
+								"{{draftId}}",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "obtener los mensajes no leidos del usuario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/mailFolders/Inbox/messages?$filter=isRead+eq+false",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"mailFolders",
+								"Inbox",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "isRead+eq+false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Descargar Attachments de un email",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/messages/{{messageId}}/attachments",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"messages",
+								"{{messageId}}",
+								"attachments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Descargar Attachments de un email Copy",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://graph.microsoft.com/v1.0/users/{{userId}}/messages/{{messageId}}/attachments",
+							"protocol": "https",
+							"host": [
+								"graph",
+								"microsoft",
+								"com"
+							],
+							"path": [
+								"v1.0",
+								"users",
+								"{{userId}}",
+								"messages",
+								"{{messageId}}",
+								"attachments"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Ases",
+			"item": [
+				{
+					"name": "getToken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonResponse = pm.response.json();\r",
+									"\r",
+									"pm.environment.set(\"token\", jsonResponse.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/getToken",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"getToken"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get Token",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/getToken",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"getToken"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 18 Apr 2024 18:04:40 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"eyJ0eXAiOiJKV1QiLCJub25jZSI6Im5uUGF5cDZWMk1LVEFhWHRBNEpPc1M3WXFhRC1WRVIzWmM3ckVGUTJ2aWMiLCJhbGciOiJSUzI1NiIsIng1dCI6InEtMjNmYWxldlpoaEQzaG05Q1Fia1A1TVF5VSIsImtpZCI6InEtMjNmYWxldlpoaEQzaG05Q1Fia1A1TVF5VSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9lZTlhNGZiNC0yMjUzLTQ2YTQtOGQzNS0yNzVhYmU3ZWJiNzYvIiwiaWF0IjoxNzEzNDYzMDY4LCJuYmYiOjE3MTM0NjMwNjgsImV4cCI6MTcxMzQ2Njk2OCwiYWlvIjoiQVNRQTIvOFdBQUFBZGdpdjVkWERLZEk4L3dyTUxDQnFTNmx3ekFIZDlYTGEvS0lSdElWRG5qND0iLCJhcHBfZGlzcGxheW5hbWUiOiJNUzM2NV9Db25lY3RvciIsImFwcGlkIjoiYmI5NjJjYmYtMmEzZS00MTYyLTk5MmUtMTM2ODA1N2NhODNjIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZWU5YTRmYjQtMjI1My00NmE0LThkMzUtMjc1YWJlN2ViYjc2LyIsImlkdHlwIjoiYXBwIiwib2lkIjoiOTFjYmM4OTEtNGNiYS00ZWE3LWE5ZDAtZWQwODlmNjM0ODMzIiwicmgiOiIwLkFYWUF0RS1hN2xNaXBFYU5OU2Rhdm42N2RnTUFBQUFBQUFBQXdBQUFBQUFBQUFDMEFBQS4iLCJyb2xlcyI6WyJNYWlsLlJlYWRXcml0ZSIsIlVzZXIuUmVhZC5BbGwiLCJNYWlsLlNlbmQiXSwic3ViIjoiOTFjYmM4OTEtNGNiYS00ZWE3LWE5ZDAtZWQwODlmNjM0ODMzIiwidGVuYW50X3JlZ2lvbl9zY29wZSI6Ik5BIiwidGVuYW50X3JlZ2lvbl9zdWJfc2NvcGUiOiJHQ0MiLCJ0aWQiOiJlZTlhNGZiNC0yMjUzLTQ2YTQtOGQzNS0yNzVhYmU3ZWJiNzYiLCJ1dGkiOiJyWEctWDJHTWRVbVFJV0lNT3dld0FBIiwidmVyIjoiMS4wIiwid2lkcyI6WyIwOTk3YTFkMC0wZDFkLTRhY2ItYjQwOC1kNWNhNzMxMjFlOTAiXSwieG1zX3RjZHQiOjE0NDQ0MDQ1MzJ9.8qqP3kHoEp-TXTamEdsWyMfCNJK2qt_r-MNJ0Vx3qwU1Tjc4LTP2eGRLDkXLBw5bV7oUrthzmG5T0aXqDGx68c4SeoEQv6QTRoSzbDUJQOJhlXvwfhxJPMK7LF7SphSCZiAb2ygJmkOgnWvT1YZR_YH6QpjQlaD39aXBxp6oBvvGcZxaHaI0Y8I6q7C8Js95lBaIxln9_Vx9NdLZ0wTPToOPon6n7JIEVfXm8V_UDmy22WxE9GEC_T_unVIFemC3sSglYvPrTONUr9j4DlVG9ZPLV6fwukskvm76Y7Su3Ox4gRZt26S7MFpg6ogB8Oe0nAgJzPradePQzdrIY5ZGDg\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener carpetas donde se almacenan los emails",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseBody = pm.response.json();\r",
+									"\r",
+									"responseBody.value.forEach(function(folder) {\r",
+									"\r",
+									"    if (folder.displayName === \"Sent Items\") {\r",
+									"        pm.environment.set(\"sentItemFolderId\", folder.id);\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/getFolders",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"getFolders"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Obtener carpetas donde se almacenan los emails",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/getFolders",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"getFolders"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 17 Apr 2024 18:48:38 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users('4f17c75f-b6f4-4ed4-bc6b-1fca1c0d58b8')/mailFolders\",\n    \"value\": [\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAKYSAAA=\",\n            \"displayName\": \"Archive\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 0,\n            \"sizeInBytes\": 0,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAFJAAA=\",\n            \"displayName\": \"Conversation History\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 1,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 0,\n            \"sizeInBytes\": 0,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEKAAA=\",\n            \"displayName\": \"Deleted Items\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 0,\n            \"sizeInBytes\": 0,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEPAAA=\",\n            \"displayName\": \"Drafts\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 17,\n            \"sizeInBytes\": 38621,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEMAAA=\",\n            \"displayName\": \"Inbox\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 2,\n            \"totalItemCount\": 2,\n            \"sizeInBytes\": 402377,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEUAAA=\",\n            \"displayName\": \"Junk Email\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 0,\n            \"sizeInBytes\": 0,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAELAAA=\",\n            \"displayName\": \"Outbox\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 0,\n            \"sizeInBytes\": 0,\n            \"isHidden\": false\n        },\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEJAAA=\",\n            \"displayName\": \"Sent Items\",\n            \"parentFolderId\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAuAAAAAABDUVK5z0QXSYlpo8Yjni6vAQBglREeNHBmQ5GhhqReUxnbAAAAAAEIAAA=\",\n            \"childFolderCount\": 0,\n            \"unreadItemCount\": 0,\n            \"totalItemCount\": 36,\n            \"sizeInBytes\": 255294,\n            \"isHidden\": false\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "creacion del draft del mensaje",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"var jsonResponse = pm.response.json();\r",
+									"\r",
+									"pm.environment.set(\"draftId\", jsonResponse.id);\r",
+									"pm.environment.set(\"conversationId\", jsonResponse.conversationId);\r",
+									"\r",
+									"console.log(\"Draft ID: \" + pm.environment.get(\"draftId\"));\r",
+									"console.log(\"Conversation ID: \" + pm.environment.get(\"conversationId\"));"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"subject\": \"esto va ir a la carpeta sent\",\r\n    \"importance\": \"low\",\r\n    \"body\": {\r\n      \"contentType\": \"HTML\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"mailtest@asespr.org\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:60020/es-email/createDraft",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"createDraft"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "creacion del draft del mensaje",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 16 Apr 2024 14:44:42 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAABKKe9AAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAODvZXkfDydCt_QtLxOEUPM=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con importancia baja",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario con importancia baja\",\r\n    \"importance\": \"low\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 13:15:37 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9ELAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAPdOShw9b1NImu7Wbx0LEaU=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con importancia normal",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario con importancia normal\",\r\n    \"importance\": \"normal\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 13:15:37 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9ELAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAPdOShw9b1NImu7Wbx0LEaU=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con importancia alta",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario con importancia alta\",\r\n    \"importance\": \"high\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:13:03 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EMAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAHIrfp5RtrJKpRFlgATE3Vc=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con ejemplo de body tipo texto",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario con body texto\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:13:03 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EMAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAHIrfp5RtrJKpRFlgATE3Vc=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con contenido html",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo un destinatario con body texto\",\r\n    \"body\": {\r\n      \"contentType\": \"html\",\r\n      \"content\": \"<h1>contenido.</h1>\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:13:03 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EMAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAHIrfp5RtrJKpRFlgATE3Vc=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con un destinatario",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con dos destinatarios\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      },\r\n        {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred.montilla@citriom.com\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:13:03 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EMAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAHIrfp5RtrJKpRFlgATE3Vc=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con un destinatario y un destinatario carbon copy",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con un destinatarios y un carbon copy\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred.montilla@citriom.com\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:22:35 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EOAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAG9rjBf88rtOk9K4cVqLP0Y=\"\n}"
+						},
+						{
+							"name": "creacion del draft del mensaje con un destinatario y el carbon copy vacio",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con un destinatarios y un carbon copy vacio\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:40:15 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEPAABglREeNHBmQ5GhhqReUxnbAAAEb9EPAAA=\",\n    \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQAKeLpdnA3ClHvS4fY7k45qI=\"\n}"
+						},
+						{
+							"name": "Error uno de los elementos del carbon copy no tiene el formato esperado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con error\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wmontilla@asespr.org\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred.montilla\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:23:45 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"ccRecipients[0].emailAddress.address invalid email format\"\n    ]\n}"
+						},
+						{
+							"name": "Error uno de los elementos del nodo destinatario no tiene address node",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con error\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:27:22 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"toRecipients[0].emailAddress should has address node\"\n    ]\n}"
+						},
+						{
+							"name": "Error el nodo destinatario no puede estar nulo",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con error\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:29:40 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"toRecipients[0].emailAddress cannot be null\"\n    ]\n}"
+						},
+						{
+							"name": "Error el nodo toRecipients no puede estar vacio",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"ejemplo con error\",\r\n    \"body\": {\r\n      \"contentType\": \"text\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:30:10 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"toRecipients should not be empty\"\n    ]\n}"
+						},
+						{
+							"name": "Error el draft debe contener el subject",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"importance\": \"low\",\r\n    \"body\": {\r\n      \"contentType\": \"HTML\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:41:26 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Subject should not be null\"\n    ]\n}"
+						},
+						{
+							"name": "Error la importancia debe ser low, normal o high",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"este es el subject\",\r\n    \"importance\": \"priority\",\r\n    \"body\": {\r\n      \"contentType\": \"HTML\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:41:56 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Importance must be 'low', 'normal', or 'high'\"\n    ]\n}"
+						},
+						{
+							"name": "Error el body no puede ser nulo",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"este es el subject\",\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:42:44 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Body cannot be null\"\n    ]\n}"
+						},
+						{
+							"name": "Error el contentType debe ser text o HTML",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"este es el subject\",\r\n    \"body\": {\r\n      \"contentType\": \"css\",\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:44:07 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"ContentType must be 'text' or 'HTML'\"\n    ]\n}"
+						},
+						{
+							"name": "Error el body content type no pude ser nulo",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"este es el subject\",\r\n    \"body\": {\r\n      \"content\": \"contenido.\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:44:38 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Body content type cannot be null\"\n    ]\n}"
+						},
+						{
+							"name": "Error El body no puede ser nulo",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"este es el subject\",\r\n    \"body\": {\r\n      \"contentType\": \"text\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"wolfred_nicol@hotmail.com\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:45:27 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Body content cannot be null\"\n    ]\n}"
+						},
+						{
+							"name": "Error no se pueden enviar nodos vacios",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"subject\": \"\",\r\n    \"importance\": \"\",\r\n    \"body\": {\r\n      \"contentType\": \"\",\r\n      \"content\": \"\"\r\n    },\r\n    \"toRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          \"address\": \"\"\r\n        }\r\n      }\r\n    ],\r\n    \"ccRecipients\": [      \r\n        {\r\n        \"emailAddress\": {\r\n          \"address\": \"\"\r\n        }\r\n      }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/createDraft",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"createDraft"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 23 Apr 2024 15:54:20 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"Body content cannot be empty\",\n        \"ccRecipients[0].emailAddress should has address node\",\n        \"toRecipients[0].emailAddress should has address node\",\n        \"Importance must be 'low', 'normal', or 'high'\",\n        \"Body content type cannot be empty\",\n        \"Subject cannot be empty\"\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "copia del draft del mensaje en la carpeta sent item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/copyDraft/{{draftId}}/sentItemFolder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"copyDraft",
+								"{{draftId}}",
+								"sentItemFolder"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "copia del draft del mensaje en la carpeta sent item",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/copyDraft/{{draftId}}/sentItemFolder",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"copyDraft",
+										"{{draftId}}",
+										"sentItemFolder"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 18 Apr 2024 17:09:01 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "subir un archivo de una ruta local al draft del mensaje",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"path\": \"src\\\\main\\\\java\\\\live\\\\hi\\\\services\\\\ms365connector\\\\dto\\\\msgraph\\\\foto.PNG\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:60020/es-email/messages/{{draftId}}/attachment",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"messages",
+								"{{draftId}}",
+								"attachment"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "subir un archivo de una ruta local al draft del mensaje",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"path\": \"src\\\\main\\\\java\\\\live\\\\hi\\\\services\\\\ms365connector\\\\dto\\\\msgraph\\\\foto.PNG\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/messages/{{draftId}}/attachment",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"messages",
+										"{{draftId}}",
+										"attachment"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 24 Apr 2024 18:36:18 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "path cannot be empty",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"path\": \"\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:60020/es-email/messages/{{draftId}}/attachment",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"messages",
+										"{{draftId}}",
+										"attachment"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 24 Apr 2024 18:48:00 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Validation failed\",\n    \"errors\": [\n        \"path cannot be empty\"\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "envio del draft del mensaje",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/sendDraft/{{draftId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"sendDraft",
+								"{{draftId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "envio del draft del mensaje",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/sendDraft/{{draftId}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"sendDraft",
+										"{{draftId}}"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 16 Apr 2024 23:21:06 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Obtener correos no leidos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"var jsonResponse = pm.response.json();\r",
+									"\r",
+									"var primerElemento = jsonResponse[0];\r",
+									"\r",
+									"pm.environment.set(\"messageId\", primerElemento.id);\r",
+									"pm.environment.set(\"conversationId\", primerElemento.conversationId);\r",
+									"\r",
+									"console.log(\"Message ID: \" + pm.environment.get(\"messageId\"));\r",
+									"console.log(\"Conversation ID: \" + pm.environment.get(\"conversationId\"));"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/notRead",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"notRead"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Obtener correos no leidos",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/notRead",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"notRead"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 16 Apr 2024 23:01:51 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEMAABglREeNHBmQ5GhhqReUxnbAAABKPTOAAA=\",\n        \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQALJ97hf5Nu5Ou0ENWnpTpfs=\",\n        \"hasAttachments\": true,\n        \"subject\": \"correo electronico de ejemplo 2\",\n        \"bodyContent\": \"<html><head>\\r\\n<meta http-equiv=\\\"Content-Type\\\" content=\\\"text/html; charset=utf-8\\\"></head><body>contenido 2. </body></html>\"\n    },\n    {\n        \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEMAABglREeNHBmQ5GhhqReUxnbAAABKPTNAAA=\",\n        \"conversationId\": \"AAQkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgAQADMocxMO2qJCjv2YyN9EAL0=\",\n        \"hasAttachments\": true,\n        \"subject\": \"correo electronico de ejemplo\",\n        \"bodyContent\": \"<html><head>\\r\\n<meta http-equiv=\\\"Content-Type\\\" content=\\\"text/html; charset=utf-8\\\"></head><body>contenido. </body></html>\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "marcar correo como leido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/markAsRead/{{messageId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"markAsRead",
+								"{{messageId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "marcar correo como leido",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/markAsRead/{{messageId}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"markAsRead",
+										"{{messageId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 24 Apr 2024 20:18:51 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Obtener Attachment por mensajes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonResponse = pm.response.json().value;\r",
+									"\r",
+									"var primerElemento = jsonResponse[0];\r",
+									"\r",
+									"pm.environment.set(\"attachmentId\", primerElemento.id);\r",
+									"pm.environment.set(\"name\", primerElemento.name);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/messages/{{messageId}}/attachments",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"messages",
+								"{{messageId}}",
+								"attachments"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Obtener Attachment por mensajes",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/messages/{{messageId}}/attachments",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"messages",
+										"{{messageId}}",
+										"attachments"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 26 Apr 2024 17:41:18 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"value\": [\n        {\n            \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEMAABglREeNHBmQ5GhhqReUxnbAAAI_OEEAAABEgAQAG4OtU_jyKdEp3-HzA2hJes=\",\n            \"name\": \"foto.PNG\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener el attachment dado el id del attachment y el id del mensaje",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonResponse = pm.response.json();\r",
+									"\r",
+									"pm.environment.set(\"name\", jsonResponse.name);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/messages/{{messageId}}/attachments/{{attachmentId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"messages",
+								"{{messageId}}",
+								"attachments",
+								"{{attachmentId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Obtener el attachment dado el id del attachment y el id del mensaje",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/messages/{{messageId}}/attachments/{{attachmentId}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"messages",
+										"{{messageId}}",
+										"attachments",
+										"{{attachmentId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 26 Apr 2024 17:43:21 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"AAMkAGI3ZjBlYzc3LTExOTQtNGUwNy05MWVjLWY3OGIyNmYwZmQzMgBGAAAAAABDUVK5z0QXSYlpo8Yjni6vBwBglREeNHBmQ5GhhqReUxnbAAAAAAEMAABglREeNHBmQ5GhhqReUxnbAAAI_OEEAAABEgAQAG4OtU_jyKdEp3-HzA2hJes=\",\n    \"name\": \"foto.PNG\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener Usuarios (TESTING)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:60020/es-email/retrieveUsers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "60020",
+							"path": [
+								"es-email",
+								"retrieveUsers"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Obtener Usuarios",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:60020/es-email/retrieveUsers",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "60020",
+									"path": [
+										"es-email",
+										"retrieveUsers"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 25 Apr 2024 17:33:52 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"value\": [\n        {\n            \"id\": \"a0203955-04ee-4d00-b914-f47495d499af\",\n            \"displayName\": \"365 Analytics\",\n            \"givenName\": \"365\",\n            \"surname\": \"Analytics\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"65517be3-a8ef-4844-9964-70b7b207efdf\",\n            \"displayName\": \"Arturo A. Alicea Rivera\",\n            \"givenName\": \"Arturo\",\n            \"surname\": \"Alicea Rivera\",\n            \"mail\": \"aalicea@asespr.org\"\n        },\n        {\n            \"id\": \"182ee3b6-ca6a-4fb8-996f-69324e19f494\",\n            \"displayName\": \"Ana Alvarez Fernández\",\n            \"givenName\": \"Ana\",\n            \"surname\": \"Alvarez Fernández\",\n            \"mail\": \"Aalvarez@asespr.org\"\n        },\n        {\n            \"id\": \"93e3a119-7294-4b8c-bed5-10681338a839\",\n            \"displayName\": \"Angela Avila Marrero\",\n            \"givenName\": \"Angela\",\n            \"surname\": \"Avila Marrero\",\n            \"mail\": \"aamarrero@asespr.org\"\n        },\n        {\n            \"id\": \"440fb078-9ee7-4d6c-9953-4ead34d42bec\",\n            \"displayName\": \"Angela Ávila\",\n            \"givenName\": \"Angela\",\n            \"surname\": \"Ávila\",\n            \"mail\": \"aavila@asespr.org\"\n        },\n        {\n            \"id\": \"74542e74-65c6-4a08-81af-c2b2ae16cc47\",\n            \"displayName\": \"Arelis Baerga Martinez\",\n            \"givenName\": \"Arelis\",\n            \"surname\": \"Baerga Martinez\",\n            \"mail\": \"abaerga@asespr.org\"\n        },\n        {\n            \"id\": \"5a8365b0-d0a4-40e7-a641-fc8c8f0de75e\",\n            \"displayName\": \"Alejandro B. Coll Guerrero\",\n            \"givenName\": \"Alejandro\",\n            \"surname\": \"Coll Guerrero\",\n            \"mail\": \"Abcoll@asespr.org\"\n        },\n        {\n            \"id\": \"f50ebbf2-a3ca-4302-b986-aab4ec1bafcc\",\n            \"displayName\": \"Armenta, Abraham\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"abraham.armenta@mercer.com\"\n        },\n        {\n            \"id\": \"06bbfab1-6e5c-40b6-9201-e0d1d06091e3\",\n            \"displayName\": \"Validación Accesos Proveedores\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"accesoproveedores@asespr.org\"\n        },\n        {\n            \"id\": \"b49568c5-67df-4681-9880-05cf9714f00a\",\n            \"displayName\": \"Ariel Correa\",\n            \"givenName\": \"Ariel\",\n            \"surname\": \"Correa\",\n            \"mail\": \"acorrea@asespr.org\"\n        },\n        {\n            \"id\": \"f0f87870-dc98-4c0b-8957-16ab4408f75c\",\n            \"displayName\": \"ADconnect\",\n            \"givenName\": \"ADconnect\",\n            \"surname\": null,\n            \"mail\": null\n        },\n        {\n            \"id\": \"59b1557c-0eef-41aa-b7d9-02002f2caec7\",\n            \"displayName\": \"Alberto de Diego\",\n            \"givenName\": \"Alberto\",\n            \"surname\": \"de Diego\",\n            \"mail\": \"adediegocollar@gmail.com\"\n        },\n        {\n            \"id\": \"87cfb745-1ee3-4b25-9748-45c2aebd833e\",\n            \"displayName\": \"Aniram Del Valle Figueroa\",\n            \"givenName\": \"Aniram\",\n            \"surname\": \"del Valle Figueroa\",\n            \"mail\": \"adelvalle@asespr.org\"\n        },\n        {\n            \"id\": \"74246f30-fed6-4d1b-8ed4-e8a5ed01a49c\",\n            \"displayName\": \"Juan Roman\",\n            \"givenName\": \"Juan\",\n            \"surname\": \"Roman\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"82654195-2260-461a-b4a5-7def055d034d\",\n            \"displayName\": \"Administrador O365\",\n            \"givenName\": \"Administrador\",\n            \"surname\": \"O365\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"a72a5676-745a-4483-bba3-a6dfab4f2f8b\",\n            \"displayName\": \"Administrador\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"Administrador@asespr.org\"\n        },\n        {\n            \"id\": \"c9de6941-8993-4030-817f-7357b2d990e3\",\n            \"displayName\": \"ADSync\",\n            \"givenName\": \"ADSync\",\n            \"surname\": \"ADSync\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"e45b5896-bfc3-4049-a8a1-c842886653fe\",\n            \"displayName\": \"Adamarys Feliciano\",\n            \"givenName\": \"Adamarys\",\n            \"surname\": \"Feliciano\",\n            \"mail\": \"afeliciano@asespr.org\"\n        },\n        {\n            \"id\": \"85815b36-0371-40b2-b40b-f9ea6b42f5cd\",\n            \"displayName\": \"Angel Gomez\",\n            \"givenName\": \"Angel\",\n            \"surname\": \"Gomez\",\n            \"mail\": \"ogomez@asespr.org\"\n        },\n        {\n            \"id\": \"2c0d91ad-a3e3-482c-b9ac-de1a930489c7\",\n            \"displayName\": \"Alejandro Gonzalez\",\n            \"givenName\": \"Alejandro\",\n            \"surname\": \"Gonzalez\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"a752d756-d06b-4e93-82e6-cf8d5f4ad467\",\n            \"displayName\": \"Ana Guillen\",\n            \"givenName\": \"Ana\",\n            \"surname\": \"Guillen\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"3586cbff-8b33-48bd-a493-9f03ce7a4287\",\n            \"displayName\": \"Arnaldo J. Martinez Ortiz\",\n            \"givenName\": \"Arnaldo\",\n            \"surname\": \"Martinez Ortiz\",\n            \"mail\": \"ajmartinez@asespr.org\"\n        },\n        {\n            \"id\": \"25860c59-316e-48f1-9dbf-63c8e87b0741\",\n            \"displayName\": \"Ana Jorge Morales\",\n            \"givenName\": \"Ana\",\n            \"surname\": \"Jorge Morales\",\n            \"mail\": \"ajorge@asespr.org\"\n        },\n        {\n            \"id\": \"b2fba8b9-fb65-4e8c-8027-5a284b4e2a0d\",\n            \"displayName\": \"alexisjeanlebron\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"alexisjeanlebron@gmail.com\"\n        },\n        {\n            \"id\": \"e1536d31-cc39-4420-a836-935e071a85fc\",\n            \"displayName\": \"Angie López Cabrera\",\n            \"givenName\": \"Angie\",\n            \"surname\": \"López\",\n            \"mail\": \"alopez@asespr.org\"\n        },\n        {\n            \"id\": \"844eb594-89e0-42c8-b631-ed1fa20baf63\",\n            \"displayName\": \"Amarillys Siver Rodriguez\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"Amarillys.Siver@oig.pr.gov\"\n        },\n        {\n            \"id\": \"ec33c4b5-898d-403b-8370-218213cbdf8c\",\n            \"displayName\": \"Addie L. Mercado Rosario\",\n            \"givenName\": \"Addie\",\n            \"surname\": \"Mercado Rosario\",\n            \"mail\": \"amercado@asespr.org\"\n        },\n        {\n            \"id\": \"20164903-5910-48e7-bc7c-cb4ce996f43a\",\n            \"displayName\": \"Correos  AMSE y FMG\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"amsefmg@asespr.org\"\n        },\n        {\n            \"id\": \"6a4b9e95-86d7-492d-add3-e9ae6e9bccbd\",\n            \"displayName\": \"Danh, An\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"An.Danh@mercer.com\"\n        },\n        {\n            \"id\": \"9f442c57-22ac-4441-8cdd-af28ef4695b9\",\n            \"displayName\": \"ana.e.alvarez@hotmail.com\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"ana.e.alvarez@hotmail.com\"\n        },\n        {\n            \"id\": \"c2d8dff9-89dc-4ef7-b061-c7df4d4954d1\",\n            \"displayName\": \"Hickman, Ana J.(CMS/CMCS)\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"ana.hickman@cms.hhs.gov\"\n        },\n        {\n            \"id\": \"3831f929-e735-4878-bae7-f4df40ac667f\",\n            \"displayName\": \"Andres Andraus\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"andres.andraus@citrix.com\"\n        },\n        {\n            \"id\": \"361c03dd-f634-4b24-bd3f-be6ada1d005f\",\n            \"displayName\": \"Aida Nieves\",\n            \"givenName\": \"Aida\",\n            \"surname\": \"Nieves\",\n            \"mail\": \"anieves@asespr.org\"\n        },\n        {\n            \"id\": \"ae5644c6-e4a4-4af4-a573-ed1cb1f77a68\",\n            \"displayName\": \"anti spamuser\",\n            \"givenName\": \"anti\",\n            \"surname\": \"spamuser\",\n            \"mail\": \"AntiSpamUser@asespr.org\"\n        },\n        {\n            \"id\": \"f95594b7-3777-4b2f-942a-262df4c7dc46\",\n            \"displayName\": \"Aracelis Nuñez Martinez\",\n            \"givenName\": \"Aracelis\",\n            \"surname\": \"Nuñez Martinez\",\n            \"mail\": \"anunez@asespr.org\"\n        },\n        {\n            \"id\": \"256d3284-561f-40d7-85fb-cbf394ec0129\",\n            \"displayName\": \"apabon@fortaleza.pr.gov\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"apabon@fortaleza.pr.gov\"\n        },\n        {\n            \"id\": \"1d0c1f19-497e-4378-8417-62717d1a69f3\",\n            \"displayName\": \"APC Alerts\",\n            \"givenName\": \"APC\",\n            \"surname\": \"Alerts\",\n            \"mail\": \"APCalerts@asespr.org\"\n        },\n        {\n            \"id\": \"aed0f325-ea51-4ddb-9b98-69b843cd649c\",\n            \"displayName\": \"Angel I. Reyes\",\n            \"givenName\": \"Angel\",\n            \"surname\": \"Reyes\",\n            \"mail\": \"areyes@asespr.org\"\n        },\n        {\n            \"id\": \"ae868a60-ad96-44f0-ab5b-6da0b94a507e\",\n            \"displayName\": \"Arytza Martínez\",\n            \"givenName\": \"Arytza\",\n            \"surname\": \"Martínez\",\n            \"mail\": \"amartinez@asespr.org\"\n        },\n        {\n            \"id\": \"9ba5694a-07d1-49aa-8dfb-73e590a8438a\",\n            \"displayName\": \"ASES COB\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"COB\",\n            \"mail\": \"ASES_COB@asespr.org\"\n        },\n        {\n            \"id\": \"ed42cbe2-963d-475c-aa28-1ab9f18c0ee2\",\n            \"displayName\": \"Administración de Seguros de Salud de Puerto Rico\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"ASES1@asespr.org\"\n        },\n        {\n            \"id\": \"cd7af8e0-1825-4578-9cc8-dd65c9b574df\",\n            \"displayName\": \"ASES Actuarial Service RFP\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesactuarialservicerfp@asespr.org\"\n        },\n        {\n            \"id\": \"83f16fb6-f3df-4afb-b99d-bd1448e068e7\",\n            \"displayName\": \"ases callcenter\",\n            \"givenName\": \"ases\",\n            \"surname\": \"callcenter\",\n            \"mail\": \"asescallcenter@asespr.org\"\n        },\n        {\n            \"id\": \"9787b168-ed78-40d0-b29e-aff1d0c3b4ef\",\n            \"displayName\": \"ASES Compliance Claim\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asescomplianceclaim@asespr.org\"\n        },\n        {\n            \"id\": \"c6220fa1-fc1f-4d38-a7e7-944af686cebf\",\n            \"displayName\": \"ASES Denuncia\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"Denuncia\",\n            \"mail\": \"asesdenuncia@asespr.org\"\n        },\n        {\n            \"id\": \"fab0ada6-0195-43ea-97e5-60d68cae029d\",\n            \"displayName\": \"ASES EDW\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"EDW\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"b40e94ba-39ee-47db-a93a-d29087d5498b\",\n            \"displayName\": \"ASES Sharefile Access Request Mail\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesftpaccessrequest@asespr.org\"\n        },\n        {\n            \"id\": \"c8e51068-579d-409e-8279-d48f27faf329\",\n            \"displayName\": \"ASES Dev HIA\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"HIA\",\n            \"mail\": \"aseshia-dev@asespr.org\"\n        },\n        {\n            \"id\": \"a76db7fe-2bf0-49f2-ba06-4262f3288b0e\",\n            \"displayName\": \"ASES Test HIA\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"HIA\",\n            \"mail\": \"aseshia-test@asespr.org\"\n        },\n        {\n            \"id\": \"6c19a88a-d5fc-4b9d-8ff0-408e60f53815\",\n            \"displayName\": \"ASES HIA\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"HIA\",\n            \"mail\": \"aseshia@asespr.org\"\n        },\n        {\n            \"id\": \"8f68e7ff-d563-45e6-8283-3e6119356372\",\n            \"displayName\": \"ASES HIASYNC\",\n            \"givenName\": \"ASES\",\n            \"surname\": \"HIASYNC\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"d7278739-0651-4205-b124-5e995985030e\",\n            \"displayName\": \"ASESLAW95\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"aseslaw95@asespr.org\"\n        },\n        {\n            \"id\": \"ca38cc31-3584-49ff-a2e5-e5c43165e758\",\n            \"displayName\": \"Procurement Legal Assesor ASES\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"aseslegalprocurement@asespr.org\"\n        },\n        {\n            \"id\": \"09444ff6-b267-4a1c-a2fa-49e153f2bdb8\",\n            \"displayName\": \"ASES Medicaid Provider Enroll Exchange\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesmedicaidproviderenroll@asespr.org\"\n        },\n        {\n            \"id\": \"19841c44-c2d9-49a8-8fbc-a684ff514fea\",\n            \"displayName\": \"ASES MMIS\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"ASESMMIS@asespr.org\"\n        },\n        {\n            \"id\": \"cebbe995-f530-423f-8812-d91383af6a94\",\n            \"displayName\": \"ASES New Model\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesnewmodel@asespr.org\"\n        },\n        {\n            \"id\": \"6ea0401b-5a8a-4c99-95a4-e61b0fd795ae\",\n            \"displayName\": \"ASESPROCUREMENT\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesprocurement@asespr.org\"\n        },\n        {\n            \"id\": \"eed4b229-9c5e-4405-a7c7-0092a811e9bf\",\n            \"displayName\": \"ASES Program Integrity\",\n            \"givenName\": \"Program\",\n            \"surname\": \"Integrity\",\n            \"mail\": \"asesprogramintegrity@asespr.org\"\n        },\n        {\n            \"id\": \"65460ce8-4e3c-4d64-ab9c-7a3d54989464\",\n            \"displayName\": \"ASES Provider Enroll\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesproviderenroll@asespr.org\"\n        },\n        {\n            \"id\": \"15fa2748-e733-4dc5-9d4f-154d44a80cec\",\n            \"displayName\": \"ASES Providers Platform\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesproviderplatform@asespr.org\"\n        },\n        {\n            \"id\": \"0e609317-803d-4f1c-974a-f0133c67b15e\",\n            \"displayName\": \"ASES Providers Registration\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesproviderregistration@asespr.org\"\n        },\n        {\n            \"id\": \"ca70cdf9-9ed4-4116-bd3f-a65fcd66630e\",\n            \"displayName\": \"ASES Veda 2020\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asesveda2020@asespr.org\"\n        },\n        {\n            \"id\": \"f7872bee-7f6f-4010-b104-8ab799be1fa8\",\n            \"displayName\": \"ASES WEB Info\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"aseswebinfo@asespr.org\"\n        },\n        {\n            \"id\": \"065e9e75-306d-4d33-bd93-b72acdaf5f2a\",\n            \"displayName\": \"Asistencia Tecnica\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"asistenciatecnica@asespr.org\"\n        },\n        {\n            \"id\": \"b1dcf1ed-c3e5-455b-ae55-87acad6b8624\",\n            \"displayName\": \"ASP.NET Machine Account\",\n            \"givenName\": \"ASP\",\n            \"surname\": \"Machine Account\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"f9585dbc-538d-4371-93da-16ed7d0f8257\",\n            \"displayName\": \"Assist Notifications\",\n            \"givenName\": \"Assist\",\n            \"surname\": \"Notifications\",\n            \"mail\": \"Assist_Notifications@asespr.org\"\n        },\n        {\n            \"id\": \"7c34a0bd-02b1-411b-abd5-bec2331f2c77\",\n            \"displayName\": \"Auditoria OIG 2022\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"audit.oig.2022@asespr.org\"\n        },\n        {\n            \"id\": \"f63746b4-1c48-45b3-ac35-b13fd9e18075\",\n            \"displayName\": \"Auditoria Oficina Contralor PR 2022\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"auditocp.2022@asespr.org\"\n        },\n        {\n            \"id\": \"74c65510-515b-4346-b43a-88db2fb5cdcc\",\n            \"displayName\": \"Ada Vélez\",\n            \"givenName\": \"Ada\",\n            \"surname\": \"Vélez\",\n            \"mail\": \"avelez@asespr.org\"\n        },\n        {\n            \"id\": \"8c0fe7e6-65b4-47d3-866d-5bbae479a50a\",\n            \"displayName\": \"awilda.broco@uhsinc.com\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"awilda.broco@uhsinc.com\"\n        },\n        {\n            \"id\": \"51b40bbb-5087-4df6-9d05-5bf641388efb\",\n            \"displayName\": \"Awilda M. Nieves Torres\",\n            \"givenName\": \"Awilda\",\n            \"surname\": \"Nieves Torres\",\n            \"mail\": \"awnieves@asespr.org\"\n        },\n        {\n            \"id\": \"32aae33c-0303-48f9-8b36-b9a15c1c7500\",\n            \"displayName\": \"BitBucket\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"BB@asespr.org\"\n        },\n        {\n            \"id\": \"6e7e7f0b-8ded-4432-a8d3-59502cd6b03e\",\n            \"displayName\": \"Blake Hansard\",\n            \"givenName\": \"Blake\",\n            \"surname\": \"Hansard\",\n            \"mail\": \"BHansard@asespr.onmicrosoft.com\"\n        },\n        {\n            \"id\": \"c9405207-7129-4e90-a018-d53bbd4cfb3c\",\n            \"displayName\": \"Brenda Lausell\",\n            \"givenName\": \"Brenda\",\n            \"surname\": \"Lausell\",\n            \"mail\": \"blausell@asespr.org\"\n        },\n        {\n            \"id\": \"a8a2f997-f74d-407c-93a9-7904a601ae8e\",\n            \"displayName\": \"Booking Services\",\n            \"givenName\": \"Booking\",\n            \"surname\": \"Services\",\n            \"mail\": \"bookingservices@asespr.org\"\n        },\n        {\n            \"id\": \"3c2eecfe-9c77-44e5-8caa-dcb137c6d0f4\",\n            \"displayName\": \"brian.editone\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"brian.editone@mercer.com\"\n        },\n        {\n            \"id\": \"f90b8ccd-a3cb-414c-bf6e-f87834d74125\",\n            \"displayName\": \"Bimarie Ríos Agosto\",\n            \"givenName\": \"Bimarie\",\n            \"surname\": \"Ríos Agosto\",\n            \"mail\": \"Brios@asespr.org\"\n        },\n        {\n            \"id\": \"d53e6daa-4571-4343-a245-2484c0da7d99\",\n            \"displayName\": \"Carmen I. Figueroa\",\n            \"givenName\": \"Carmen\",\n            \"surname\": \"Figueroa\",\n            \"mail\": \"cafigueroa@asespr.org\"\n        },\n        {\n            \"id\": \"4f97aaf9-09ea-49ab-a4d6-b907a0813986\",\n            \"displayName\": \"Carlos Fuentes\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Fuentes\",\n            \"mail\": \"cafuentes@asespr.org\"\n        },\n        {\n            \"id\": \"16cc4737-efe8-4b2f-8205-4b9ef60cea2e\",\n            \"displayName\": \"Carolina Guzmán Tejada\",\n            \"givenName\": \"Carolina\",\n            \"surname\": \"Guzmán Tejada\",\n            \"mail\": \"caguzman@asespr.org\"\n        },\n        {\n            \"id\": \"2549191a-2fd9-48c2-982e-6194ea0e4cd2\",\n            \"displayName\": \"Merchan, Camilo\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"camilo.merchan@mercer.com\"\n        },\n        {\n            \"id\": \"851db286-76ac-453f-8814-00ebc6d1469e\",\n            \"displayName\": \"Carmelo Padilla\",\n            \"givenName\": \"Carmelo\",\n            \"surname\": \"Padilla\",\n            \"mail\": \"capadilla@asespr.org\"\n        },\n        {\n            \"id\": \"5f56aead-cd42-41bf-96b9-9312f1aa4796\",\n            \"displayName\": \"carlos.fuentes\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Fuentes\",\n            \"mail\": \"carlos.fuentes@citriom.com\"\n        },\n        {\n            \"id\": \"42be0cb5-eb6b-4646-8e1b-effb9374bfe6\",\n            \"displayName\": \"Carlos Chico\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Chico\",\n            \"mail\": \"cchico@asespr.org\"\n        },\n        {\n            \"id\": \"029c9deb-f929-46dc-997a-6b3b3fd6b979\",\n            \"displayName\": \"Oficina Contratistas\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"ccontratistas@asespr.org\"\n        },\n        {\n            \"id\": \"a1a95453-b1e6-4809-a636-941db43fb23a\",\n            \"displayName\": \"Carlos Delgado\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Delgado\",\n            \"mail\": \"CDelgado@asespr.org\"\n        },\n        {\n            \"id\": \"b2fdc921-7f70-45a6-9174-8c696174a3c7\",\n            \"displayName\": \"Carmen Fuentes Ramos\",\n            \"givenName\": \"Carmen\",\n            \"surname\": \"Fuentes Ramos\",\n            \"mail\": \"CFuentes@asespr.org\"\n        },\n        {\n            \"id\": \"6baf3782-1b41-4203-b836-8c1c92cc8216\",\n            \"displayName\": \"Cathia Guadalupe Cortés\",\n            \"givenName\": \"Cathia\",\n            \"surname\": \"Guadalupe Cortés\",\n            \"mail\": \"CGuadalupe@asespr.org\"\n        },\n        {\n            \"id\": \"b34400c9-244e-4966-912f-1d52479184bf\",\n            \"displayName\": \"Carlos Guzmán\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Guzmán\",\n            \"mail\": \"cguzman@asespr.org\"\n        },\n        {\n            \"id\": \"08ea4cfb-88fd-4f73-8485-8f3374570b4d\",\n            \"displayName\": \"Babcock, Chris\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"Christine.Babcock@mercer.com\"\n        },\n        {\n            \"id\": \"7f834717-03ee-41df-ab1c-6cb5bc04ef23\",\n            \"displayName\": \"Popov, Christopher\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"christopher.popov@mercer.com\"\n        },\n        {\n            \"id\": \"2b53b149-0964-486b-abaf-698986238dad\",\n            \"displayName\": \"Carla Imbert\",\n            \"givenName\": \"Carla\",\n            \"surname\": \"Imbert\",\n            \"mail\": \"cimbert@asespr.org\"\n        },\n        {\n            \"id\": \"fab860bb-ecb2-4281-b329-d6181af73283\",\n            \"displayName\": \"Ward, Cindy\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"cindy.ward@mercer.com\"\n        },\n        {\n            \"id\": \"4e6ec0ff-5cab-4481-8175-1e1c77b712d1\",\n            \"displayName\": \"Carlos J. Torres\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Torres\",\n            \"mail\": null\n        },\n        {\n            \"id\": \"8641a8a1-3e20-4c3e-a363-08b4c9a90b7f\",\n            \"displayName\": \"Carmen L. Rodríguez Santiago\",\n            \"givenName\": \"Carmen\",\n            \"surname\": \"Rodríguez\",\n            \"mail\": \"cleticia@asespr.org\"\n        },\n        {\n            \"id\": \"e5e507c6-1721-4e40-8194-f09592c5abc4\",\n            \"displayName\": \"cmartinezguzman\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"cmartinezguzman@icloud.com\"\n        },\n        {\n            \"id\": \"59b19804-0eb8-4e8d-89d7-74b5f0677231\",\n            \"displayName\": \"Carlos Mateo\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Mateo\",\n            \"mail\": \"cmateo@asespr.org\"\n        },\n        {\n            \"id\": \"8b664696-e000-4cf9-bcac-7186bb4e7b4f\",\n            \"displayName\": \"CMS-ASES Complaints\",\n            \"givenName\": null,\n            \"surname\": null,\n            \"mail\": \"CMS_ASESComplaint@asespr.org\"\n        },\n        {\n            \"id\": \"7edd23d4-51e0-4181-a799-202add767bde\",\n            \"displayName\": \"Carmen M. Santiago\",\n            \"givenName\": \"Carmen\",\n            \"surname\": \"Santiago\",\n            \"mail\": \"cmsantiago@asespr.org\"\n        },\n        {\n            \"id\": \"44333819-6ea8-4786-a7e8-8391ffd7ea1d\",\n            \"displayName\": \"Carlos J. Negron\",\n            \"givenName\": \"Carlos\",\n            \"surname\": \"Negron\",\n            \"mail\": \"cnegron@asespr.org\"\n        }\n    ],\n    \"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users\"\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}
